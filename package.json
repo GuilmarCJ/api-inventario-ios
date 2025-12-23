@@ -1,7 +1,6 @@
 {
   "name": "api-inventario-ios",
   "version": "1.0.0",
-  "description": "API para app iOS de inventario",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

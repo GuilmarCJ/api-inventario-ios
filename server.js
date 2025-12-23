@@ -1,4 +1,10 @@
-require('dotenv').config();
+try {
+  require('dotenv').config();
+  console.log('✅ dotenv cargado para desarrollo local');
+} catch (error) {
+  console.log('✅ Usando variables de entorno de Render');
+}
+
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
