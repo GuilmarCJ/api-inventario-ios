@@ -148,5 +148,60 @@ app.get('/api/historial-salidas', async (req, res) => {
     }
 });
 
+
+// ============================================
+// 🔍 NUEVO: ENDPOINT PARA VER USUARIOS LOGUEADOS
+// ============================================
+app.get('/api/usuarios-logueados', async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM usuarios_logueados ORDER BY fecha_login DESC'
+        );
+        res.json({ 
+            success: true, 
+            total: result.rows.length,
+            usuarios: result.rows 
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error obteniendo usuarios' });
+    }
+});
+
+// ============================================
+// 🔍 NUEVO: ENDPOINT PARA VER PRODUCTOS
+// ============================================
+app.get('/api/todos-productos', async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM productos ORDER BY fecha_importacion DESC'
+        );
+        res.json({ 
+            success: true, 
+            total: result.rows.length,
+            productos: result.rows 
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error obteniendo productos' });
+    }
+});
+
+// ============================================
+// 🔍 NUEVO: ENDPOINT PARA VER TODAS LAS SALIDAS
+// ============================================
+app.get('/api/todas-salidas', async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM salidas_productos ORDER BY fecha_salida DESC'
+        );
+        res.json({ 
+            success: true, 
+            total: result.rows.length,
+            salidas: result.rows 
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error obteniendo salidas' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 API funcionando en puerto ${PORT}`));
