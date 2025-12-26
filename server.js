@@ -230,5 +230,117 @@ app.post('/api/limpiar-productos', async (req, res) => {
     }
 });
 
+// ============================================
+// 🧪 ENDPOINT PARA BORRAR DATOS DE TESTING
+// (Usar SOLO en desarrollo/testing)
+// ============================================
+app.delete('/api/testing/limpiar-todo', async (req, res) => {
+    try {
+        console.log('🧹 Iniciando limpieza completa de datos de testing...');
+        
+        // 1. Limpiar productos
+        const productosEliminados = await pool.query('DELETE FROM productos RETURNING *');
+        console.log(`✅ Eliminados ${productosEliminados.rowCount} productos`);
+        
+        // 2. Limpiar salidas
+        const salidasEliminadas = await pool.query('DELETE FROM salidas_productos RETURNING *');
+        console.log(`✅ Eliminados ${salidasEliminadas.rowCount} registros de salidas`);
+        
+        // 3. Limpiar usuarios logueados (opcional, mantener para testing)
+        const usuariosEliminados = await pool.query('DELETE FROM usuarios_logueados RETURNING *');
+        console.log(`✅ Eliminados ${usuariosEliminados.rowCount} registros de usuarios`);
+        
+        res.json({
+            success: true,
+            mensaje: '🧹 LIMPIEZA COMPLETA DE TESTING',
+            detalles: {
+                productos_eliminados: productosEliminados.rowCount,
+                salidas_eliminadas: salidasEliminadas.rowCount,
+                usuarios_eliminados: usuariosEliminados.rowCount,
+                total_eliminado: productosEliminados.rowCount + salidasEliminadas.rowCount + usuariosEliminados.rowCount
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en limpieza:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Error limpiando datos',
+            detalle: error.message 
+        });
+    }
+});
+
+// ============================================
+// 👤 LIMPIAR DATOS DE UN USUARIO ESPECÍFICO
+// ============================================
+app.delete('/api/testing/limpiar-usuario/:correo', async (req, res) => {
+    try {
+        const correo = req.params.correo;
+        console.log(`🧹 Limpiando datos del usuario: ${correo}`);
+        
+        // 1. Limpiar productos del usuario
+        const productosEliminados = await pool.query(
+            'DELETE FROM productos WHERE usuario_correo = $1 RETURNING *',
+            [correo]
+        );
+        
+        // 2. Limpiar salidas del usuario
+        const salidasEliminadas = await pool.query(
+            'DELETE FROM salidas_productos WHERE usuario_correo = $1 RETURNING *',
+            [correo]
+        );
+        
+        // 3. Limpiar login del usuario (opcional)
+        const loginEliminado = await pool.query(
+            'DELETE FROM usuarios_logueados WHERE correo = $1 RETURNING *',
+            [correo]
+        );
+        
+        res.json({
+            success: true,
+            mensaje: `🧹 Datos limpiados para: ${correo}`,
+            detalles: {
+                productos_eliminados: productosEliminados.rowCount,
+                salidas_eliminadas: salidasEliminadas.rowCount,
+                login_eliminado: loginEliminado.rowCount
+            }
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: 'Error limpiando usuario' });
+    }
+});
+
+// ============================================
+// 📊 VER ESTADO ACTUAL DE LA BASE DE DATOS
+// ============================================
+app.get('/api/testing/estado', async (req, res) => {
+    try {
+        const productos = await pool.query('SELECT COUNT(*) FROM productos');
+        const salidas = await pool.query('SELECT COUNT(*) FROM salidas_productos');
+        const usuarios = await pool.query('SELECT COUNT(*) FROM usuarios_logueados');
+        
+        res.json({
+            success: true,
+            estado: 'Base de datos activa',
+            fecha: new Date().toISOString(),
+            estadisticas: {
+                total_productos: parseInt(productos.rows[0].count),
+                total_salidas: parseInt(salidas.rows[0].count),
+                total_usuarios_logueados: parseInt(usuarios.rows[0].count)
+            },
+            ultimos_registros: {
+                productos: await pool.query('SELECT * FROM productos ORDER BY id DESC LIMIT 5'),
+                salidas: await pool.query('SELECT * FROM salidas_productos ORDER BY id DESC LIMIT 5'),
+                usuarios: await pool.query('SELECT * FROM usuarios_logueados ORDER BY id DESC LIMIT 5')
+            }
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: 'Error obteniendo estado' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 API funcionando en puerto ${PORT}`));
