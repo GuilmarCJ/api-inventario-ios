@@ -203,5 +203,32 @@ app.get('/api/todas-salidas', async (req, res) => {
     }
 });
 
+// ============================================
+// 🧹 NUEVO: LIMPIAR PRODUCTOS DE UN USUARIO
+// Se llama cuando exporta CSV
+// ============================================
+
+app.post('/api/limpiar-productos', async (req, res) => {
+    try {
+        const { usuario_correo } = req.body;
+        
+        // Eliminar productos del usuario
+        const result = await pool.query(
+            'DELETE FROM productos WHERE usuario_correo = $1 RETURNING *',
+            [usuario_correo]
+        );
+        
+        // OPCIONAL: También eliminar salidas del usuario
+        // await pool.query('DELETE FROM salidas_productos WHERE usuario_correo = $1', [usuario_correo]);
+        
+        res.json({ 
+            success: true, 
+            mensaje: `Se limpiaron ${result.rowCount} productos del usuario ${usuario_correo}` 
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error limpiando productos' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 API funcionando en puerto ${PORT}`));
